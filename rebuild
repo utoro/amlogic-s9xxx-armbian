@@ -278,7 +278,12 @@ query_version() {
                 echo -e "${INFO} (${x}.${i}) Auto query the latest kernel version of the same series for [ ${k} - ${kernel_var} ]"
                 MAIN_LINE="$(echo ${kernel_var} | awk -F '.' '{print $1"."$2}')"
                 # Check the version on the server (e.g LATEST_VERSION="125")
-                LATEST_VERSION="$(curl -s "${server_kernel_url}/${k}" | grep "name" | grep -oE "${MAIN_LINE}.[0-9]+" | sed -e "s/${MAIN_LINE}.//g" | sort -n | sed -n '$p')"
+                if [[ -n "${GITHUB_REPOSITORY}" ]]; then
+                    LATEST_VERSION="$(curl --header 'authorization: Bearer ${{ secrets.GH_TOKEN }}' -s "${server_kernel_url}/${k}" | grep "name" | grep -oE "${MAIN_LINE}.[0-9]+" | sed -e "s/${MAIN_LINE}.//g" | sort -n | sed -n '$p')"
+                else
+                    LATEST_VERSION="$(curl -s "${server_kernel_url}/${k}" | grep "name" | grep -oE "${MAIN_LINE}.[0-9]+" | sed -e "s/${MAIN_LINE}.//g" | sort -n | sed -n '$p')"
+                fi
+
                 if [[ "${?}" -eq "0" && -n "${LATEST_VERSION}" ]]; then
                     tmp_arr_kernels[${i}]="${MAIN_LINE}.${LATEST_VERSION}"
                 else
